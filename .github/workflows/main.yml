@@ -1,0 +1,40 @@
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Change to your default branch name (e.g., 'main' or 'master')
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '11.6.0'  # Specify Node.js version
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          npm install
+
+      # Build the website (assumes your build command is 'npm run build')
+      - name: Build website
+        run: |
+          npm run build
+
+      # Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages  # The branch to deploy to (GitHub Pages)
+          folder: build  # The folder to deploy (output folder of your build)
+          token: ${{ secrets.GITHUB_TOKEN }}  # GitHub token to authenticate the push

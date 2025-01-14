@@ -38,3 +38,7 @@ jobs:
           branch: gh-pages  # The branch to deploy to (GitHub Pages)
           folder: build  # The folder to deploy (output folder of your build)
           token: ${{ secrets.GITHUB_TOKEN }}  # GitHub token to authenticate the push
+
+      - name: deploy site fully 
+        run: |
+            npm run deploy

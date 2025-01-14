@@ -39,3 +39,9 @@ jobs:
           folder: build  # The folder to deploy (output folder of your build)
           token: ${{ secrets.GITHUB_TOKEN }}  # GitHub token to authenticate the push
 
+      - name: Deploy to GitHub Pages (2nd Overview Check)
+        run: |
+          npm run deploy  # Run the custom deploy script to push to gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+

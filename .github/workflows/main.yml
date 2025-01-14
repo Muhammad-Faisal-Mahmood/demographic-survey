@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Allow the GitHub Actions bot to push to the repository
 
     steps:
       # Checkout the repository

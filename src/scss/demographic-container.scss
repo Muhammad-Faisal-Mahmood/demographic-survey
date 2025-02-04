@@ -1,0 +1,20 @@
+.demographic-container input,
+.demographic-container select {
+  all: unset; /* Resets all styles */
+  border: 1px solid #ccc; /* Adds a minimal border */
+  font-size: 16px; /* Sets font size */
+  width: 100px; /* Fixed width */
+  height: auto; /* Automatically adjusts height to fit content */
+  padding: 4px 8px; /* Adds padding for better spacing */
+  background-color: rgb(255, 0, 0); /* Red background */
+  color: black; /* Black text color */
+  box-sizing: border-box; /* Includes padding in width/height calculations */
+  line-height: 1.5; /* Ensures proper spacing between lines */
+}
+
+.demographic-container select {
+  /* Override the width if necessary */
+  display: inline-block; /* Ensures proper alignment */
+  appearance: none; /* Removes the default browser styling for consistency */
+  cursor: pointer; /* Pointer cursor for better UX */
+}

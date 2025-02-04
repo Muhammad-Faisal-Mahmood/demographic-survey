@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react";
 
 export default function About() {
   return (
@@ -6,5 +6,5 @@ export default function About() {
       <h2>About</h2>
       <p>This is a tool to roughly measure implicit association bias.</p>
     </div>
-  )
+  );
 }

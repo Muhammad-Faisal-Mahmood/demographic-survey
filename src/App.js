@@ -5,6 +5,7 @@ import About from "./containers/About";
 import ImplicitBiasTest from "./containers/ImplicitBiasTest";
 import DemographicInfo from "./containers/DemographicInfo";
 import "./scss/global.scss";
+import DemographicForm from "./containers/DemographicForm";
 
 export default function App() {
   return (
@@ -21,7 +22,7 @@ export default function App() {
             <Home />
           </Route>
           <Route path="/">
-            <DemographicInfo />
+            <DemographicForm />
           </Route>
         </Switch>
       </div>

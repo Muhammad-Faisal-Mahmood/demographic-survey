@@ -1,20 +1,21 @@
-import React from 'react'
-import { connect } from 'react-redux'
+import React from "react";
+import { connect } from "react-redux";
 
-import ActiveTest from './ActiveTest'
-import BlockStart from './BlockStart'
-import TargetAndOrCategory from './TargetAndOrCategory'
-import TestError from './TestError'
-import { startBlock } from '../actions'
-import IMPLICIT_BIAS_TEST_BLOCKS from '../constants/ImplicitBiasTestBlocks'
-import INPUT_KEYS from '../constants/InputKeys'
-import { getDisplayValuesForType } from '../constants/TargetCategoryDisplayType'
+import ActiveTest from "./ActiveTest";
+import BlockStart from "./BlockStart";
+import TargetAndOrCategory from "./TargetAndOrCategory";
+import TestError from "./TestError";
+import { startBlock } from "../actions";
+import IMPLICIT_BIAS_TEST_BLOCKS from "../constants/ImplicitBiasTestBlocks";
+import INPUT_KEYS from "../constants/InputKeys";
+import { getDisplayValuesForType } from "../constants/TargetCategoryDisplayType";
 
 const Block = ({ test, currentTest, dispatchStartBlock }) => {
-  const currentBlock = IMPLICIT_BIAS_TEST_BLOCKS[currentTest.currentBlockIndex]
-  if (!currentBlock) return <TestError />
-  const { displayType } = currentBlock
-  const { leftTarget, rightTarget, leftCategory, rightCategory } = getDisplayValuesForType(displayType, test.compatible)
+  const currentBlock = IMPLICIT_BIAS_TEST_BLOCKS[currentTest.currentBlockIndex];
+  if (!currentBlock) return <TestError />;
+  const { displayType } = currentBlock;
+  const { leftTarget, rightTarget, leftCategory, rightCategory } =
+    getDisplayValuesForType(displayType, test.compatible);
   return (
     <div className="test-block">
       <section className="selection-groups">
@@ -27,14 +28,15 @@ const Block = ({ test, currentTest, dispatchStartBlock }) => {
           <TargetAndOrCategory target={rightTarget} category={rightCategory} />
         </div>
       </section>
-      { currentTest.blockStarted ?
+      {currentTest.blockStarted ? (
         <ActiveTest
           currentTest={currentTest}
           leftTarget={leftTarget}
           rightTarget={rightTarget}
           leftCategory={leftCategory}
           rightCategory={rightCategory}
-        /> :
+        />
+      ) : (
         <BlockStart
           currentBlockIndex={currentTest.currentBlockIndex}
           leftTarget={leftTarget}
@@ -43,22 +45,19 @@ const Block = ({ test, currentTest, dispatchStartBlock }) => {
           rightCategory={rightCategory}
           startBlock={() => dispatchStartBlock()}
         />
-      }
+      )}
     </div>
-  )
-}
+  );
+};
 
-const mapStateToProps = ({currentTest}) => ({
-  currentTest
-})
+const mapStateToProps = ({ currentTest }) => ({
+  currentTest,
+});
 
-const mapDispatchToProps = dispatch => ({
-  dispatchStartBlock: () => dispatch(startBlock())
-})
+const mapDispatchToProps = (dispatch) => ({
+  dispatchStartBlock: () => dispatch(startBlock()),
+});
 
-const VisibleBlock = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Block)
+const VisibleBlock = connect(mapStateToProps, mapDispatchToProps)(Block);
 
-export default VisibleBlock
+export default VisibleBlock;

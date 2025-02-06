@@ -1,154 +1,242 @@
-import React from 'react'
-import { connect } from 'react-redux'
+import React from "react";
+import { connect } from "react-redux";
 
-import TestError from './TestError'
-import { finishBlock, finishTest, setCompatibleMilliseconds, setIncompatibleMilliseconds } from '../actions'
-import IMPLICIT_BIAS_TEST_BLOCKS from '../constants/ImplicitBiasTestBlocks'
-import INPUT_KEYS, { getEventKeyForInputKey } from '../constants/InputKeys'
-import targetAndCategoryValues from '../data/targetAndCategoryValues'
-import { toTitleCase } from '../formatters'
-import TARGET_CATEGORY_DISPLAY_TYPE from '../constants/TargetCategoryDisplayType'
+import TestError from "./TestError";
+import {
+  finishBlock,
+  finishTest,
+  setCompatibleMilliseconds,
+  setIncompatibleMilliseconds,
+} from "../actions";
+import IMPLICIT_BIAS_TEST_BLOCKS from "../constants/ImplicitBiasTestBlocks";
+import INPUT_KEYS, { getEventKeyForInputKey } from "../constants/InputKeys";
+import targetAndCategoryValues from "../data/targetAndCategoryValues";
+import { toTitleCase } from "../formatters";
+import TARGET_CATEGORY_DISPLAY_TYPE from "../constants/TargetCategoryDisplayType";
 
-const TARGET_OR_CATEGORY = { // need to be lowercase - will be used as classes
-  TARGET: 'target',
-  CATEGORY: 'category'
-}
+const TARGET_OR_CATEGORY = {
+  TARGET: "target",
+  CATEGORY: "category",
+};
 
 const LEFT_OR_RIGHT = {
-  LEFT: 'LEFT',
-  RIGHT: 'RIGHT'
-}
+  LEFT: "LEFT",
+  RIGHT: "RIGHT",
+};
 
-const TARGET_CATEGORY_ORDER = [TARGET_OR_CATEGORY.TARGET, TARGET_OR_CATEGORY.CATEGORY]
-const LEFT_RIGHT_OPTIONS = [LEFT_OR_RIGHT.LEFT, LEFT_OR_RIGHT.RIGHT]
+const TARGET_CATEGORY_ORDER = [
+  TARGET_OR_CATEGORY.TARGET,
+  TARGET_OR_CATEGORY.CATEGORY,
+];
+const LEFT_RIGHT_OPTIONS = [LEFT_OR_RIGHT.LEFT, LEFT_OR_RIGHT.RIGHT];
 
 class ActiveTest extends React.Component {
   constructor() {
-    super()
-    this.state = { currentRound: -1 }
+    super();
+    this.state = {
+      currentRound: -1,
+      roundStartTime: null, // Track time for each round
+    };
   }
+
   componentDidMount() {
     if (!!this.props.currentBlock && this.props.currentBlock.critical) {
-      this.setState({ timeStarted: Date.now() })
+      this.setState({ timeStarted: Date.now() });
     }
-    document.addEventListener('keyup', this.handleKeyPress)
-    this.startNewRound()
+    document.addEventListener("keyup", this.handleKeyPress);
+    this.startNewRound();
   }
+
   componentWillUnmount() {
-    document.removeEventListener('keyup', this.handleKeyPress)
+    document.removeEventListener("keyup", this.handleKeyPress);
+
     if (this.props.currentBlock.critical) {
-      const totalTime = Date.now() - this.state.timeStarted
-      this.props.currentBlock.displayType === TARGET_CATEGORY_DISPLAY_TYPE.COMPATIBLE_ALL ?
-        this.props.dispatchSetCompatibleMilliseconds(totalTime) :
-        this.props.dispatchSetIncompatibleMilliseconds(totalTime)
+      const totalTime = Date.now() - this.state.timeStarted;
+      this.props.currentBlock.displayType ===
+      TARGET_CATEGORY_DISPLAY_TYPE.COMPATIBLE_ALL
+        ? this.props.dispatchSetCompatibleMilliseconds(totalTime)
+        : this.props.dispatchSetIncompatibleMilliseconds(totalTime);
     }
-    
-    if (this.props.currentTest.currentBlockIndex  === IMPLICIT_BIAS_TEST_BLOCKS.length - 1) {
-      this.props.dispatchFinishTest()
+
+    if (
+      this.props.currentTest.currentBlockIndex ===
+      IMPLICIT_BIAS_TEST_BLOCKS.length - 1
+    ) {
+      this.props.dispatchFinishTest();
     }
   }
+
   valuesForOptions = (targetOrCategory, leftOrRight) => {
     if (targetOrCategory === TARGET_OR_CATEGORY.TARGET) {
-      return leftOrRight === LEFT_OR_RIGHT.LEFT ?
-        this.props.leftTargetValues :
-        this.props.rightTargetValues
+      return leftOrRight === LEFT_OR_RIGHT.LEFT
+        ? this.props.leftTargetValues
+        : this.props.rightTargetValues;
     }
-    return leftOrRight === LEFT_OR_RIGHT.LEFT ?
-      this.props.leftCategoryValues :
-      this.props.rightCategoryValues
-  }
+    return leftOrRight === LEFT_OR_RIGHT.LEFT
+      ? this.props.leftCategoryValues
+      : this.props.rightCategoryValues;
+  };
+
   startNewRound = () => {
-    const currentRound = this.state.currentRound + 1
-    if (currentRound >= this.props.currentBlock.numTrials) {
-      return this.props.dispatchFinishBlock()
+    if (this.state.currentRound !== -1) {
+      // Calculate round time only if it's not the first round
+      const roundTime = Date.now() - this.state.roundStartTime;
+
+      // Determine the correct key to press (LEFT or RIGHT)
+      const correctKey =
+        this.state.leftOrRight === LEFT_OR_RIGHT.LEFT ? "LEFT" : "RIGHT";
+
+      // Determine the correct answer value (e.g., "Good Person" or "Bad Person")
+
+      const correctAnswerValue =
+        this.state.targetOrCategory == "target"
+          ? this.state.leftOrRight == "LEFT"
+            ? this.props?.leftTarget
+            : this.props?.rightTarget
+          : this.state.leftOrRight == "LEFT"
+          ? this.props?.leftCategory
+          : this.props?.rightCategory;
+
+      console.log(
+        `value to display: ${this.state.valueToDisplay}\n` +
+          `current round: ${this.state.currentRound}\n` +
+          `targetOrCategory: ${this.state.targetOrCategory}\n` +
+          `left or right: ${this.state.leftOrRight}\n` +
+          `Round ${this.state.currentRound} Time: ${roundTime} ms\n` +
+          `Correct Key: '${correctKey}'\n` +
+          `Correct Answer Value: '${correctAnswerValue}'\n`
+      );
     }
-    const targetOrCategory = !!this.props.soleTargetOrCategory ?
-      this.props.soleTargetOrCategory :
-      TARGET_CATEGORY_ORDER[currentRound % 2]
-    const leftOrRight = LEFT_RIGHT_OPTIONS[Math.round(Math.random())]
-    const values = this.valuesForOptions(targetOrCategory, leftOrRight)
-    const valuesWithoutLastTwoRoundValues = values.filter(v =>
-      [this.state.valueToDisplay, this.state.lastValueToDisplay].indexOf(v) === -1)
-    const valueToDisplayIndex = Math.floor(Math.random() * Math.floor(valuesWithoutLastTwoRoundValues.length - 1))
-    const valueToDisplay = valuesWithoutLastTwoRoundValues[valueToDisplayIndex]
-    return this.setState({
+    const currentRound = this.state.currentRound + 1;
+    if (currentRound >= this.props.currentBlock.numTrials) {
+      return this.props.dispatchFinishBlock();
+    }
+
+    const targetOrCategory = !!this.props.soleTargetOrCategory
+      ? this.props.soleTargetOrCategory
+      : TARGET_CATEGORY_ORDER[currentRound % 2];
+
+    const leftOrRight = LEFT_RIGHT_OPTIONS[Math.round(Math.random())];
+    const values = this.valuesForOptions(targetOrCategory, leftOrRight);
+
+    const valuesWithoutLastTwoRoundValues = values.filter(
+      (v) =>
+        [this.state.valueToDisplay, this.state.lastValueToDisplay].indexOf(
+          v
+        ) === -1
+    );
+
+    const valueToDisplayIndex = Math.floor(
+      Math.random() * valuesWithoutLastTwoRoundValues.length
+    );
+    const valueToDisplay = valuesWithoutLastTwoRoundValues[valueToDisplayIndex];
+
+    // Start the timer for the new round
+    const roundStartTime = Date.now();
+
+    this.setState({
       currentRound,
       targetOrCategory,
       leftOrRight,
       valueToDisplay,
       lastValueToDisplay: this.state.valueToDisplay,
-      incorrectKeyPressed: false
-    })
-  }
+      incorrectKeyPressed: false,
+      roundStartTime, // Store the start time for the new round
+    });
+  };
+
   handleKeyPress = (event) => {
-    switch(event.key) {
+    switch (event.key) {
       case getEventKeyForInputKey(INPUT_KEYS.LEFT):
-        return this.handleLeftKeyPress()
+        return this.handleLeftKeyPress();
       case getEventKeyForInputKey(INPUT_KEYS.RIGHT):
-        return this.handleRightKeyPress()
+        return this.handleRightKeyPress();
       default:
-        return
+        return;
     }
-  }
+  };
+
   handleLeftKeyPress = () => {
     if (this.state.leftOrRight === LEFT_OR_RIGHT.LEFT) {
-      return this.startNewRound()
+      return this.startNewRound();
     } else if (this.state.leftOrRight === LEFT_OR_RIGHT.RIGHT) {
-      this.displayIncorrectKeySign()
+      this.displayIncorrectKeySign();
     }
-  }
+  };
+
   handleRightKeyPress = () => {
     if (this.state.leftOrRight === LEFT_OR_RIGHT.RIGHT) {
-      return this.startNewRound()
+      return this.startNewRound();
     } else if (this.state.leftOrRight === LEFT_OR_RIGHT.LEFT) {
-      this.displayIncorrectKeySign()
+      this.displayIncorrectKeySign();
     }
-  }
+  };
+
   displayIncorrectKeySign = () => {
-    this.setState({incorrectKeyPressed: true})
-  }
+    this.setState({ incorrectKeyPressed: true });
+  };
+
   render() {
-    const { currentBlock } = this.props
-    const { valueToDisplay, targetOrCategory, incorrectKeyPressed } = this.state
-    if (!currentBlock) return <TestError />
+    const { currentBlock } = this.props;
+    const { valueToDisplay, targetOrCategory, incorrectKeyPressed } =
+      this.state;
+
+    if (!currentBlock) return <TestError />;
+
     return (
       <div>
-        <div className={`displayed-test-value ${targetOrCategory}`}>{toTitleCase(valueToDisplay)}</div>
-        <div className="incorrect-key-x">{incorrectKeyPressed && 'X'}</div>
-        <p>If you make a mistake, a red <span className="bold-red">X</span> will appear. Press the other key to continue.</p>
+        <div className={`displayed-test-value ${targetOrCategory}`}>
+          {toTitleCase(valueToDisplay)}
+        </div>
+        <div className="incorrect-key-x">{incorrectKeyPressed && "X"}</div>
+        <p>
+          If you make a mistake, a red <span className="bold-red">X</span> will
+          appear. Press the other key to continue.
+        </p>
       </div>
-    )
-  } 
+    );
+  }
 }
 
 const getSoleTargetOrCategory = (leftTarget, leftCategory) => {
-  if (!!leftTarget && !leftCategory) return TARGET_OR_CATEGORY.TARGET
-  if (!leftTarget && !!leftCategory) return TARGET_OR_CATEGORY.CATEGORY
-  return null
-}
+  if (!!leftTarget && !leftCategory) return TARGET_OR_CATEGORY.TARGET;
+  if (!leftTarget && !!leftCategory) return TARGET_OR_CATEGORY.CATEGORY;
+  return null;
+};
 
-const mapStateToProps = ({ currentTest }, { leftTarget, leftCategory, rightTarget, rightCategory }) => {
+const mapStateToProps = (
+  { currentTest },
+  { leftTarget, leftCategory, rightTarget, rightCategory }
+) => {
   return {
     currentTest,
     currentBlock: IMPLICIT_BIAS_TEST_BLOCKS[currentTest.currentBlockIndex],
     leftTargetValues: !!leftTarget ? targetAndCategoryValues[leftTarget] : null,
-    rightTargetValues: !!rightTarget ? targetAndCategoryValues[rightTarget] : null,
-    leftCategoryValues: !!leftCategory ? targetAndCategoryValues[leftCategory] : null,
-    rightCategoryValues: !!rightCategory ? targetAndCategoryValues[rightCategory] : null,
-    soleTargetOrCategory: getSoleTargetOrCategory(leftTarget, leftCategory)
-  }
-}
+    rightTargetValues: !!rightTarget
+      ? targetAndCategoryValues[rightTarget]
+      : null,
+    leftCategoryValues: !!leftCategory
+      ? targetAndCategoryValues[leftCategory]
+      : null,
+    rightCategoryValues: !!rightCategory
+      ? targetAndCategoryValues[rightCategory]
+      : null,
+    soleTargetOrCategory: getSoleTargetOrCategory(leftTarget, leftCategory),
+  };
+};
 
-const mapDispatchToProps = dispatch => ({
+const mapDispatchToProps = (dispatch) => ({
   dispatchFinishBlock: () => dispatch(finishBlock()),
   dispatchFinishTest: () => dispatch(finishTest()),
-  dispatchSetCompatibleMilliseconds: millis => dispatch(setCompatibleMilliseconds(millis)),
-  dispatchSetIncompatibleMilliseconds: millis => dispatch(setIncompatibleMilliseconds(millis))
-})
+  dispatchSetCompatibleMilliseconds: (millis) =>
+    dispatch(setCompatibleMilliseconds(millis)),
+  dispatchSetIncompatibleMilliseconds: (millis) =>
+    dispatch(setIncompatibleMilliseconds(millis)),
+});
 
 const VisibleActiveTest = connect(
   mapStateToProps,
   mapDispatchToProps
-)(ActiveTest)
+)(ActiveTest);
 
-export default VisibleActiveTest
+export default VisibleActiveTest;

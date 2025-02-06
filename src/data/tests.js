@@ -2,17 +2,16 @@
 
 const tests = [
   {
-    id: 'power-happiness',
-    name: 'African test',
-    description: '',
-    targetType: 'nationality',
-    categoryType: 'type of person',
+    id: "power-happiness",
+    name: "African test",
+    description: "",
+    targetType: "nationality",
+    categoryType: "type of person",
     compatible: {
-      'south_african': 'good_person',
-      'foreigner': 'bad_person'
+      south_african: "good_person",
+      foreigner: "bad_person",
     },
-    
-  }
-]
+  },
+];
 
 export default tests;

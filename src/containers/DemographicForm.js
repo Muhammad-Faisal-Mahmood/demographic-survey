@@ -28,7 +28,7 @@ const DemographicForm = () => {
     console.log("Form Data Submitted:", formData);
 
     // Navigate to /home after submission
-    window.location.href = "/home";
+    window.location.href = "/test/power-happiness";
   };
 
   return (

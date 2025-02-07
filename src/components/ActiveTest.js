@@ -35,7 +35,9 @@ class ActiveTest extends React.Component {
     super();
     this.state = {
       currentRound: -1,
-      roundStartTime: null, // Track time for each round
+      roundStartTime: null,
+      userAnswerValue: null, // Store the user's first response
+      firstResponseTime: null, // Store the time taken for first response
     };
   }
 
@@ -79,34 +81,37 @@ class ActiveTest extends React.Component {
 
   startNewRound = () => {
     if (this.state.currentRound !== -1) {
-      // Calculate round time only if it's not the first round
-      const roundTime = Date.now() - this.state.roundStartTime;
+      let roundTime = Date.now() - this.state.roundStartTime;
 
-      // Determine the correct key to press (LEFT or RIGHT)
       const correctKey =
         this.state.leftOrRight === LEFT_OR_RIGHT.LEFT ? "LEFT" : "RIGHT";
 
-      // Determine the correct answer value (e.g., "Good Person" or "Bad Person")
-
       const correctAnswerValue =
-        this.state.targetOrCategory == "target"
-          ? this.state.leftOrRight == "LEFT"
+        this.state.targetOrCategory === "target"
+          ? this.state.leftOrRight === "LEFT"
             ? this.props?.leftTarget
             : this.props?.rightTarget
-          : this.state.leftOrRight == "LEFT"
+          : this.state.leftOrRight === "LEFT"
           ? this.props?.leftCategory
           : this.props?.rightCategory;
 
+      // Ensure firstResponseTime and roundTime are equal if userAnswerValue matches correctAnswerValue
+      if (this.state.userAnswerValue === correctAnswerValue) {
+        roundTime = this.state.firstResponseTime;
+      }
+
       console.log(
-        `value to display: ${this.state.valueToDisplay}\n` +
-          `current round: ${this.state.currentRound}\n` +
-          `targetOrCategory: ${this.state.targetOrCategory}\n` +
-          `left or right: ${this.state.leftOrRight}\n` +
-          `Round ${this.state.currentRound} Time: ${roundTime} ms\n` +
+        `Round no: ${this.state.currentRound}\n` +
+          `Question: ${this.state.valueToDisplay}\n` +
+          `Correct Answer Value: '${correctAnswerValue}'\n` +
+          `User Answer Value: '${this.state.userAnswerValue}'\n` +
+          `User Response Time: ${this.state.firstResponseTime} ms\n` +
+          `Total Round Time: ${roundTime} ms\n` +
           `Correct Key: '${correctKey}'\n` +
-          `Correct Answer Value: '${correctAnswerValue}'\n`
+          `targetOrCategory: ${this.state.targetOrCategory}\n`
       );
     }
+
     const currentRound = this.state.currentRound + 1;
     if (currentRound >= this.props.currentBlock.numTrials) {
       return this.props.dispatchFinishBlock();
@@ -131,7 +136,6 @@ class ActiveTest extends React.Component {
     );
     const valueToDisplay = valuesWithoutLastTwoRoundValues[valueToDisplayIndex];
 
-    // Start the timer for the new round
     const roundStartTime = Date.now();
 
     this.setState({
@@ -141,11 +145,18 @@ class ActiveTest extends React.Component {
       valueToDisplay,
       lastValueToDisplay: this.state.valueToDisplay,
       incorrectKeyPressed: false,
-      roundStartTime, // Store the start time for the new round
+      roundStartTime,
+      userAnswerValue: null,
+      firstResponseTime: null,
     });
   };
 
   handleKeyPress = (event) => {
+    if (!this.state.userAnswerValue) {
+      const responseTime = Date.now() - this.state.roundStartTime;
+      this.setState({ firstResponseTime: responseTime });
+    }
+
     switch (event.key) {
       case getEventKeyForInputKey(INPUT_KEYS.LEFT):
         return this.handleLeftKeyPress();
@@ -157,6 +168,12 @@ class ActiveTest extends React.Component {
   };
 
   handleLeftKeyPress = () => {
+    if (!this.state.userAnswerValue) {
+      this.setState({
+        userAnswerValue: this.props.leftCategory || this.props.leftTarget,
+      });
+    }
+
     if (this.state.leftOrRight === LEFT_OR_RIGHT.LEFT) {
       return this.startNewRound();
     } else if (this.state.leftOrRight === LEFT_OR_RIGHT.RIGHT) {
@@ -165,6 +182,12 @@ class ActiveTest extends React.Component {
   };
 
   handleRightKeyPress = () => {
+    if (!this.state.userAnswerValue) {
+      this.setState({
+        userAnswerValue: this.props.rightCategory || this.props.rightTarget,
+      });
+    }
+
     if (this.state.leftOrRight === LEFT_OR_RIGHT.RIGHT) {
       return this.startNewRound();
     } else if (this.state.leftOrRight === LEFT_OR_RIGHT.LEFT) {
